@@ -35,9 +35,10 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.sol.storef.R
 import com.sol.storef.domain.model.Product
+import com.sol.storef.navigation.StoreF
 
 @Composable
-fun ProductsScreen(viewModel: ProductViewModel= hiltViewModel()) {
+fun ProductsScreen(navController: NavController, viewModel: ProductViewModel) {
     val products by viewModel.products.observeAsState(emptyList())
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
 
@@ -62,13 +63,13 @@ fun ProductsScreen(viewModel: ProductViewModel= hiltViewModel()) {
 
         }
         selectedProduct?.let { product ->
-            AlertProduct(product, viewModel) {
+            AlertProduct(product, viewModel, navController) {
                 selectedProduct = null // Cierra el diálogo
             }
         }
         FloatingActionButton(
             onClick = {
-//                TODO
+                navController.navigate(StoreF.Cart.route)
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -86,6 +87,7 @@ fun ProductsScreen(viewModel: ProductViewModel= hiltViewModel()) {
 fun AlertProduct(
     product: Product,
     viewModel: ProductViewModel,
+    navController: NavController,
     onDismiss: () -> Unit
 ) {
     AlertDialog(title = { Text(text = product.title) },
@@ -105,7 +107,10 @@ fun AlertProduct(
             }
         },
         confirmButton = {
-            Button(onClick = { viewModel.addProductsCart(product) }) {
+            Button(onClick = {
+                viewModel.addProductsCart(product)
+                navController.navigate(StoreF.Cart.route)
+            }) {
                 Text(text = "Add to cart")
             }
         })
