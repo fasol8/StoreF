@@ -17,16 +17,18 @@ class ProductViewModel @Inject constructor(private val repository: ProductReposi
 
     private val _products = MutableLiveData<List<Product>>()
     val products: LiveData<List<Product>> = _products
+    var limit = 10
 
     init {
         getAllProducts()
     }
 
-    fun getAllProducts(limit: Int = 10) {
+    fun getAllProducts() {
         viewModelScope.launch {
             try {
-                val response = repository.getAllProducts(10)
+                val response = repository.getAllProducts(limit)
                 _products.value = response
+                limit += 10
             } catch (e: Exception) {
                 Log.i("Error", e.message.toString())
             }
