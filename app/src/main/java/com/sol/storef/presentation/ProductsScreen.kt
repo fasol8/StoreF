@@ -1,16 +1,21 @@
 package com.sol.storef.presentation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,17 +25,21 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.sol.storef.R
 import com.sol.storef.domain.model.Product
 
 @Composable
-fun ProductsScreen(viewModel: ProductViewModel = hiltViewModel()) {
+fun ProductsScreen(viewModel: ProductViewModel= hiltViewModel()) {
     val products by viewModel.products.observeAsState(emptyList())
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
-
 
     Box(
         modifier = Modifier
@@ -40,7 +49,7 @@ fun ProductsScreen(viewModel: ProductViewModel = hiltViewModel()) {
         LazyVerticalGrid(columns = GridCells.Fixed(2)) {
             items(products.size) { index ->
                 val product = products[index]
-                CardProduct(product) {
+                CardProduct(product, viewModel) {
                     selectedProduct = product
                 }
 
@@ -53,16 +62,32 @@ fun ProductsScreen(viewModel: ProductViewModel = hiltViewModel()) {
 
         }
         selectedProduct?.let { product ->
-            AlertProduct(product) {
+            AlertProduct(product, viewModel) {
                 selectedProduct = null // Cierra el diálogo
             }
         }
-//        Text(text = products.toString())
+        FloatingActionButton(
+            onClick = {
+//                TODO
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_shopping_cart),
+                contentDescription = "Shopping cart"
+            )
+        }
     }
 }
 
 @Composable
-fun AlertProduct(product: Product, onDismiss: () -> Unit) {
+fun AlertProduct(
+    product: Product,
+    viewModel: ProductViewModel,
+    onDismiss: () -> Unit
+) {
     AlertDialog(title = { Text(text = product.title) },
         text = {
             Column {
@@ -73,38 +98,49 @@ fun AlertProduct(product: Product, onDismiss: () -> Unit) {
                 Text(text = product.rating.rate.toString())
             }
         },
-        onDismissRequest = {
-//            Button(onClick = {
-//                Log.i("Confirm", "Add card $product")
-////            val intent = Intent()
-////            context.startActivity(intent)
-//            }) {
-//                Text(text = "Add a cart")
-//            }
+        onDismissRequest = { onDismiss() },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
         },
         confirmButton = {
-            Button(onClick = onDismiss) {
-                Text("Close")
+            Button(onClick = { viewModel.addProductsCart(product) }) {
+                Text(text = "Add to cart")
             }
         })
 }
 
 @Composable
-fun CardProduct(product: Product, onClick: () -> Unit) {
+fun CardProduct(product: Product, viewModel: ProductViewModel, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(8.dp),
         onClick = { onClick() }
     ) {
         Column {
             AsyncImage(
                 model = product.image,
                 contentDescription = product.title,
-                modifier = Modifier.height(250.dp)
+                modifier = Modifier.height(250.dp),
+                contentScale = ContentScale.Crop
             )
-            Text(text = product.title, style = MaterialTheme.typography.titleSmall)
-            Text(text = product.price.toString(), style = MaterialTheme.typography.displaySmall)
+            Text(text = product.title, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+            Row {
+                Text(
+                    text = product.price.toString(),
+                    style = MaterialTheme.typography.displaySmall,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+                Button(onClick = { viewModel.addProductsCart(product) }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_add_shopping_cart),
+                        contentDescription = "add product cart"
+                    )
+                }
+            }
         }
     }
 }

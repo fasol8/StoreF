@@ -15,8 +15,12 @@ import javax.inject.Inject
 class ProductViewModel @Inject constructor(private val repository: ProductRepository) :
     ViewModel() {
 
-    private val _products = MutableLiveData<List<Product>>()
+    private val _products = MutableLiveData<List<Product>>(emptyList())
     val products: LiveData<List<Product>> = _products
+
+    private val _productsCart = MutableLiveData<List<Product>>(emptyList())
+    val productsCart: LiveData<List<Product>> = _productsCart
+
     var limit = 10
 
     init {
@@ -33,5 +37,22 @@ class ProductViewModel @Inject constructor(private val repository: ProductReposi
                 Log.i("Error", e.message.toString())
             }
         }
+    }
+
+    fun addProductsCart(product: Product) {
+        val currentCart = _productsCart.value ?: emptyList()
+        _productsCart.value = currentCart.plus(product)
+    }
+
+    fun deleteProducts(product: Product) {
+        _productsCart.value = _productsCart.value?.filter { it.id != product.id }
+    }
+
+    fun getTotalCart(): Double {
+        var total = 0.0
+        _productsCart.value?.let { products ->
+            total = products.sumOf { it.price }
+        }
+        return total
     }
 }
